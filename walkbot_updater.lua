@@ -22,23 +22,26 @@ local function download_files(path, local_directory)
     end
 end
 
-local core_version_file = file.Open(walkbot.config.main_directory .. "\\version.txt", "r")
-local online_core_version = http.Get(walkbot.config.data_download_url .. "/version.txt")
+local core_path = "https://raw.githubusercontent.com/ShadyRetard/aimware_walkbot/master"
+local core_local_path = "walkbot"
+
+local core_version_file = file.Open(core_local_path .. "\\version.txt", "r")
+local online_core_version = http.Get(core_path .. "/version.txt")
 
 walkbot.config = RunScript("walkbot\\modules\\config.lua")
 
 if (walkbot.config == nil or core_version_file == nil or core_version_file:Read() ~= online_core_version) then
-    download_files(walkbot.config.core_download_url, walkbot.config.main_directory)
+    download_files(core_path, core_local_path)
 end
 
-walkbot.json = RunScript(walkbot.config.main_directory .. "\\json.lua")
+local data_path = "https://raw.githubusercontent.com/ShadyRetard/aimware_walkbot_data/master"
+local data_local_path = "walkbot\\data"
 
-
-local data_version_file = file.Open(walkbot.config.data_directory .. "\\version.txt", "r")
-local online_data_version = http.Get(walkbot.config.data_download_url .. "/version.txt")
+local data_version_file = file.Open(data_local_path .. "\\version.txt", "r")
+local online_data_version = http.Get(data_path .. "/version.txt")
 
 if (data_version_file == nil or online_data_version ~= data_version_file:Read()) then
-    download_files(walkbot.config.data_download_url, walkbot.config.data_directory)
+    download_files(data_path, data_local_path)
 end
 
 callbacks.Register("Draw", "walkbot_update_data_files", function()
@@ -54,12 +57,5 @@ end)
 if (is_downloading == false) then
     callbacks.Unregister("Draw", "walkbot_update_core_files")
     callbacks.Unregister("Draw", "walkbot_update_data_files")
-
-    for _, value in pairs(walkbot.config.modules) do
-        walkbot[value] = RunScript(walkbot.config.modules_path .. "\\" .. value .. ".lua")
-    end
-
-    for _, value in pairs(walkbot.config.modules) do
-        walkbot[value].connect(walkbot)
-    end
+	RunScript("walkbot\\walkbot.lua")
 end
