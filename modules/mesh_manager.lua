@@ -1,3 +1,5 @@
+-- Walkbot by ShadyRetard
+
 local walkbot_mesh_manager = {}
 local walkbot = nil
 

@@ -1,3 +1,5 @@
+-- Walkbot by ShadyRetard
+
 local walkbot = {}
 
 walkbot.config = RunScript("walkbot\\modules\\config.lua")

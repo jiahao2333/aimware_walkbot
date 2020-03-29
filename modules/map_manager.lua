@@ -1,3 +1,5 @@
+-- Walkbot by ShadyRetard
+
 local walkbot_map_manager = {}
 local walkbot = nil
 local cached_map_data = {}

@@ -1,3 +1,5 @@
+-- Walkbot by ShadyRetard
+
 local walkbot_movement = {}
 local walkbot = nil
 local movement_speed = 250

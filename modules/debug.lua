@@ -1,3 +1,5 @@
+-- Walkbot by ShadyRetard
+
 local walkbot_debug = {}
 local walkbot = nil
 

@@ -1,3 +1,5 @@
+-- Walkbot by ShadyRetard
+
 local walkbot_memory = {}
 local walkbot = nil
 local remembered_players = {}

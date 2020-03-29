@@ -1,3 +1,5 @@
+-- Walkbot by ShadyRetard
+
 local config = {}
 
 config.modules = {

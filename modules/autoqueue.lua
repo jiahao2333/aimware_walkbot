@@ -1,3 +1,5 @@
+-- Walkbot by ShadyRetard
+
 local walkbot_autoqueue = {}
 local walkbot
 local gamemodes_info = nil

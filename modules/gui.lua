@@ -1,3 +1,5 @@
+-- Walkbot by ShadyRetard
+
 local walkbot_gui = {}
 local walkbot = nil
 local groupboxes = {}

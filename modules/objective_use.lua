@@ -1,3 +1,5 @@
+-- Walkbot by ShadyRetard
+
 local walkbot_objective_use = {}
 local walkbot = nil
 
