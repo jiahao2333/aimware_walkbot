@@ -123,6 +123,8 @@ local function update_current_position()
 end
 
 local function draw_objectives()
+    if (walkbot.enabled_checkbox:GetValue() == false) then return end
+    if (walkbot.gui.debug_enabled_checkbox:GetValue() == false) then return end
     local current_objectives = walkbot.objective.get_available_objectives()
     for i=1, #current_objectives do
         local objective = current_objectives[i]

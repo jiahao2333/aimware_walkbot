@@ -2,6 +2,8 @@
 
 local walkbot = {}
 
+callbacks.Unregister("Draw", "walkbot_update_data_files")
+
 walkbot.config = RunScript("walkbot\\modules\\config.lua")
 walkbot.json = RunScript(walkbot.config.main_directory .. "\\json.lua")
 

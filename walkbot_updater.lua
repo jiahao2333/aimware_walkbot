@@ -45,6 +45,8 @@ if (data_version_file == nil or online_data_version ~= data_version_file:Read())
 end
 
 callbacks.Register("Draw", "walkbot_update_data_files", function()
+	if (num_data_files_available == 0) then return end
+
     if (num_data_files_available ~= (num_data_files_downloaded + num_data_files_failed)) then
         draw.Text(0, 0, "[Walkbot Update] Downloading..." .. num_data_files_downloaded .. " / " .. num_data_files_available .. " files.")
     elseif (num_data_files_failed > 0) then
@@ -55,7 +57,6 @@ callbacks.Register("Draw", "walkbot_update_data_files", function()
 end)
 
 if (is_downloading == false) then
-    callbacks.Unregister("Draw", "walkbot_update_core_files")
     callbacks.Unregister("Draw", "walkbot_update_data_files")
 	RunScript("walkbot\\walkbot.lua")
 end

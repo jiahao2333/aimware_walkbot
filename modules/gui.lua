@@ -90,10 +90,10 @@ end
 
 local function initialize()
     local main_groupbox = walkbot_gui.add_groupbox("Main", nil, 100)
-    walkbot.enabled_checkbox = gui.Checkbox(main_groupbox, "walkbot_enabled", "Enabled Walkbot", true)
+    walkbot.enabled_checkbox = gui.Checkbox(main_groupbox, "walkbot_enabled", "Enabled Walkbot", false)
 
     local debugging_groupbox = walkbot_gui.add_groupbox("Debugging", nil, 100)
-    walkbot_gui.debug_enabled_checkbox = gui.Checkbox(debugging_groupbox, "walkbot_debug_enabled", "Enabled debug", true)
+    walkbot_gui.debug_enabled_checkbox = gui.Checkbox(debugging_groupbox, "walkbot_debug_enabled", "Enabled debug", false)
 
     callbacks.Register("Draw", "walkbot.gui.debug.draw", debug_draw)
 end

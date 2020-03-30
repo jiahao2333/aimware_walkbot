@@ -92,8 +92,8 @@ local function movement(cmd)
 
     if (next_area == nil and (final_destination ~= nil and (local_player:GetAbsOrigin() - final_destination):Length() > 50)) then
         local angle_to_target = (final_destination - player_origin):Angles()
-        cmd.forwardmove = math.cos((cmd.viewangles - angle_to_target)["y"] * (math.pi / 180)) * movement_speed
-        cmd.sidemove = math.sin((cmd.viewangles - angle_to_target)["y"] * (math.pi / 180)) * movement_speed
+        cmd.forwardmove = math.cos(math.rad((engine:GetViewAngles() - angle_to_target).y)) * movement_speed
+        cmd.sidemove = math.sin(math.rad((engine:GetViewAngles() - angle_to_target).y)) * movement_speed
         return
     end
 
@@ -145,8 +145,8 @@ local function movement(cmd)
     end
 
     local angle_to_target = (point_to_walk_to - player_origin):Angles()
-    -- cmd.forwardmove = math.cos((cmd.viewangles - angle_to_target)["y"] * (math.pi / 180)) * movement_speed
-    -- cmd.sidemove = math.sin((cmd.viewangles - angle_to_target)["y"] * (math.pi / 180)) * movement_speed
+    cmd.forwardmove = math.cos(math.rad((engine:GetViewAngles() - angle_to_target).y)) * movement_speed
+    cmd.sidemove = math.sin(math.rad((engine:GetViewAngles() - angle_to_target).y)) * movement_speed
 
     if (connection_to_next_area["LadderDirection"] ~= nil or (globals.RealTime() - last_ladder_time < 5 and #current_area["LadderConnections"] > 0)) then
         cmd.viewangles = angle_to_target
