@@ -6,12 +6,14 @@ local movement_speed = 250
 local last_jump = nil
 local last_use = nil
 local last_shot = nil
+local last_movement_speed_update = globals.RealTime()
 local last_ladder_time = globals.RealTime()
 local unstuck_attempt = 0
 local last_unstuck_attempt = nil
 
 function walkbot_movement.set_movement_speed(speed)
     movement_speed = speed
+    last_movement_speed_update = globals.RealTime()
 end
 
 local function is_within_intersection(intersection, player_origin)
@@ -36,39 +38,47 @@ local function find_nearby_entity(class_name, position)
 end
 
 local function corner_one(connection)
-    local direction = connection["Direction"]
+    local direction = connection.direction
 
-    if (direction == 0) then
-        return connection["Intersection"][1]
-    elseif (direction == 1) then
-        return connection["Intersection"][2]
+    if (direction == 1) then
+        return connection.intersection[1]
     elseif (direction == 2) then
-        return connection["Intersection"][3]
+        return connection.intersection[2]
     elseif (direction == 3) then
-        return connection["Intersection"][1]
+        return connection.intersection[3]
+    elseif (direction == 4) then
+        return connection.intersection[1]
     end
 end
 
 local function corner_two(connection)
-    local direction = connection["Direction"]
+    local direction = connection.direction
 
-    if (direction == 0) then
-        return connection["Intersection"][2]
-    elseif (direction == 1) then
-        return connection["Intersection"][3]
+    if (direction == 1) then
+        return connection.intersection[2]
     elseif (direction == 2) then
-        return connection["Intersection"][4]
+        return connection.intersection[3]
     elseif (direction == 3) then
-        return connection["Intersection"][4]
+        return connection.intersection[4]
+    elseif (direction == 4) then
+        return connection.intersection[4]
     end
 end
 
 local function movement(cmd)
     if (walkbot.enabled_checkbox:GetValue() == false) then return end
+
+    if (bit.band(cmd.buttons, walkbot.objective_use.IN_ATTACK) ~= 0) then
+        walkbot_movement.set_movement_speed(0)
+    end
+
+    if (bit.band(cmd.buttons, walkbot.objective_use.IN_USE) ~= 0) then
+        walkbot_movement.set_movement_speed(0)
+    end
+
     if (movement_speed == 0) then
-        local is_shooting = false
-        if (is_shooting == false and bit.band(cmd.buttons, walkbot.objective_use.IN_USE) == 0) then
-            movement_speed = 250
+        if (globals.RealTime() - last_movement_speed_update > 0.3 and bit.band(cmd.buttons, walkbot.objective_use.IN_ATTACK) == 0 and bit.band(cmd.buttons, walkbot.objective_use.IN_USE) == 0) then
+            walkbot_movement.set_movement_speed(250)
         end
         return
     end
@@ -81,8 +91,8 @@ local function movement(cmd)
 
     local current_area = walkbot.mesh_manager.current_area()
     if (current_area == nil) then return end
-    
-    local path_index = walkbot.mesh_navigation.is_on_current_path(current_area["ID"])
+
+    local path_index = walkbot.mesh_navigation.is_on_current_path(current_area.id)
     if (path_index == nil) then return end
 
     local next_area = walkbot.mesh_navigation.route_to_target()[path_index + 1]
@@ -97,9 +107,12 @@ local function movement(cmd)
         return
     end
 
-    if (next_area == nil) then return end
+    if (next_area == nil) then
+        walkbot.objective.force_new_objective()
+        return
+    end
 
-    local connection_to_next_area = walkbot.mesh_manager.find_connection_to_target_id(current_area, next_area["ID"])
+    local connection_to_next_area = walkbot.mesh_manager.find_connection_to_target_id(current_area, next_area.id)
     local point_to_walk_to = walkbot.mesh_manager.connection_walking_point(connection_to_next_area)
 
     if (player_velocity(local_player) < 10) then
@@ -112,7 +125,7 @@ local function movement(cmd)
         local first_nearby_door = find_nearby_entity("CBasePropDoor", player_origin)
         local first_nearby_breakable_prop = find_nearby_entity("CBreakableProp", player_origin)
         if (first_nearby_door ~= nil and (last_use == nil or globals.TickCount() - last_use > 32)) then
-            local aim_point = (first_nearby_door:GetAbsOrigin() - local_player:GetBonePosition(8)):Angles() * -1
+            local aim_point = (first_nearby_door:GetAbsOrigin() - (local_player:GetAbsOrigin() + local_player:GetPropVector("localdata", "m_vecViewOffset[0]"))):Angles() * -1
             aim_point["pitch"] = 0
             cmd.viewangles = aim_point
             cmd.buttons = bit.bor(cmd.buttons, walkbot.objective_use.IN_USE)
@@ -135,12 +148,14 @@ local function movement(cmd)
         elseif (unstuck_attempt == 3) then
             point_to_walk_to = corner_two(connection_to_next_area)
         elseif (unstuck_attempt == 4) then
+            cmd.buttons = bit.bor(cmd.buttons, walkbot.objective_use.IN_JUMP)
+        elseif (unstuck_attempt == 5) then
             unstuck_attempt = 0
             if (bit.band(cmd.buttons, walkbot.objective_use.IN_USE) ~= 0) then
                 walkbot.objective.force_new_objective()
             end
         end
-    elseif(last_unstuck_attempt == nil or globals.RealTime() - last_unstuck_attempt > 1) then
+    elseif(last_unstuck_attempt == nil or globals.RealTime() - last_unstuck_attempt > 2) then
         unstuck_attempt = 0
     end
 
@@ -148,7 +163,7 @@ local function movement(cmd)
     cmd.forwardmove = math.cos(math.rad((engine:GetViewAngles() - angle_to_target).y)) * movement_speed
     cmd.sidemove = math.sin(math.rad((engine:GetViewAngles() - angle_to_target).y)) * movement_speed
 
-    if (connection_to_next_area["LadderDirection"] ~= nil or (globals.RealTime() - last_ladder_time < 5 and #current_area["LadderConnections"] > 0)) then
+    if (connection_to_next_area.ladder_direction ~= nil or (globals.RealTime() - last_ladder_time < 5 and #current_area.ladders > 0)) then
         cmd.viewangles = angle_to_target
         cmd.buttons = bit.bor(cmd.buttons, walkbot.objective_use.IN_FORWARD)
         last_ladder_time = globals.RealTime()
@@ -156,15 +171,15 @@ local function movement(cmd)
 
     if (
         (last_jump == nil or globals.RealTime() - last_jump > 1)
-        and bit.band(current_area["Flags"], walkbot.mesh_manager.NAV_MESH_NO_JUMP) == 0
+        and bit.band(current_area.flags, walkbot.mesh_manager.NAV_MESH_NO_JUMP) == 0
         and (
             point_to_walk_to["z"] - player_origin["z"] > 18
             or (
-                (bit.band(next_area["Flags"],  walkbot.mesh_manager.NAV_MESH_STAIRS) ~= 0
-                 or bit.band(next_area["Flags"],  walkbot.mesh_manager.NAV_MESH_JUMP) ~= 0)
+                (bit.band(next_area.flags,  walkbot.mesh_manager.NAV_MESH_STAIRS) ~= 0
+                 or bit.band(next_area.flags,  walkbot.mesh_manager.NAV_MESH_JUMP) ~= 0)
                 and walkbot.mesh_manager.center_of_node(next_area)["z"] > player_origin["z"])
             )
-        and is_within_intersection(connection_to_next_area["Intersection"], player_origin)
+        and is_within_intersection(connection_to_next_area.intersection, player_origin)
     ) then
         last_jump = globals.RealTime()
         cmd.buttons = bit.bor(cmd.buttons, walkbot.objective_use.IN_JUMP)
@@ -172,10 +187,10 @@ local function movement(cmd)
 
     if (
         (last_jump ~= nil and globals.RealTime() - last_jump < 0.3)
-        or bit.band(current_area["Flags"], walkbot.mesh_manager.NAV_MESH_CROUCH) ~= 0
+        or bit.band(current_area.flags, walkbot.mesh_manager.NAV_MESH_CROUCH) ~= 0
         or (
-            is_within_intersection(connection_to_next_area["Intersection"], player_origin)
-            and bit.band(next_area["Flags"], walkbot.mesh_manager.NAV_MESH_CROUCH) ~= 0)
+            is_within_intersection(connection_to_next_area.intersection, player_origin)
+            and bit.band(next_area.flags, walkbot.mesh_manager.NAV_MESH_CROUCH) ~= 0)
         ) then
         cmd.buttons = bit.bor(cmd.buttons, walkbot.objective_use.IN_DUCK)
     end

@@ -45,7 +45,7 @@ local function update_players(esp_builder)
 
     local enemy_player = esp_builder:GetEntity()
 
-    if (enemy_player:IsPlayer() == false or enemy_player:GetTeamNumber() == 0 and enemy_player:GetTeamNumber() == 1) then
+    if (enemy_player:IsPlayer() == false or enemy_player:GetTeamNumber() == 0 or enemy_player:GetTeamNumber() == 1) then
         return
     end
 
