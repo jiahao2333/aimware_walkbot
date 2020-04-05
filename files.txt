@@ -1,5 +1,6 @@
 walkbot.lua
 json.lua
+modules\aimbot.lua
 modules\autoqueue.lua
 modules\config.lua
 modules\debug.lua
@@ -11,4 +12,6 @@ modules\mesh_navigation.lua
 modules\movement.lua
 modules\objective.lua
 modules\objective_use.lua
+modules\sourcenav.lua
+modules\struct.lua
 version.txt
