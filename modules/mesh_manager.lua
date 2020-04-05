@@ -22,18 +22,19 @@ end
 
 function walkbot_mesh_manager.areas()
     if (current_mesh == nil) then return end
-    return current_mesh["Areas"]
+    return current_mesh.areas
 end
 
 function walkbot_mesh_manager.find_place_by_id(place_id)
     if (current_mesh == nil) then return end
+    if (current_mesh.places == nil) then return end
     local found_place = nil
 
-    for i=1, #current_mesh["Places"] do
-        local ladder = current_mesh["Places"][i]
+    for i=1, #current_mesh.places do
+        local place = current_mesh.places[i]
 
-        if (ladder["ID"] == place_id) then
-            found_place = ladder
+        if (place.id == place_id) then
+            found_place = place
             break;
         end
     end
@@ -43,7 +44,7 @@ end
 
 function walkbot_mesh_manager.is_current_area(area_id)
     if (current_area == nil) then return false end
-    return area_id == current_area["ID"]
+    return area_id == current_area.id
 end
 
 function walkbot_mesh_manager.find_closest_area(area_vector)
@@ -51,14 +52,14 @@ function walkbot_mesh_manager.find_closest_area(area_vector)
 
     local within_areas = {}
 
-    for i=1, #current_mesh["Areas"] do
-        local area = current_mesh["Areas"][i]
+    for i=1, #current_mesh.areas do
+        local area = current_mesh.areas[i]
 
-        if (area_vector.x >= area["NorthWest"]["X"] and
-            area_vector.x <= area["SouthEast"]["X"] and
-            area_vector.y >= area["NorthWest"]["Y"] and
-            area_vector.y <= area["SouthEast"]["Y"] and
-            #area["Connections"] > 0
+        if (area_vector.x >= area.north_west.x and
+            area_vector.x <= area.south_east.x and
+            area_vector.y >= area.north_west.y and
+            area_vector.y <= area.south_east.y and
+            #area.connections > 0
         ) then
             table.insert(within_areas, area)
         end
@@ -69,7 +70,7 @@ function walkbot_mesh_manager.find_closest_area(area_vector)
         local within_areas_closest_distance = 99999
         for i=1, #within_areas do
             local area = within_areas[i]
-            local z_distance = math.abs((area_vector.z - area["NorthWest"]["Z"]) + (area_vector.z - area["SouthEast"]["Z"]))
+            local z_distance = math.abs((area_vector.z - area.north_west.z) + (area_vector.z - area.south_east.z))
 
             if z_distance <= within_areas_closest_distance then
                 within_areas_closest_distance = z_distance
@@ -82,10 +83,10 @@ function walkbot_mesh_manager.find_closest_area(area_vector)
 
     local closest_area = nil
     local closest_area_distance = 99999
-    for i=1, #current_mesh["Areas"] do
-        local area = current_mesh["Areas"][i]
+    for i=1, #current_mesh.areas do
+        local area = current_mesh.areas[i]
 
-        if (#area["Connections"] > 0) then
+        if (#area.connections > 0) then
             local distance = (area_vector - walkbot_mesh_manager.center_of_node(area)):Length()
 
             if distance < closest_area_distance then
@@ -107,10 +108,10 @@ function walkbot_mesh_manager.find_area_by_id(area_id)
 
     local found_area = nil
 
-    for i=1, #current_mesh["Areas"] do
-        local area = current_mesh["Areas"][i]
+    for i=1, #current_mesh.areas do
+        local area = current_mesh.areas[i]
 
-        if (area["ID"] == area_id) then
+        if (area.id == area_id) then
             found_area = area
             break;
         end
@@ -127,10 +128,10 @@ function walkbot_mesh_manager.find_ladder_by_id(ladder_id)
     if (current_mesh == nil) then return end
     local found_ladder = nil
 
-    for i=1, #current_mesh["Ladders"] do
-        local ladder = current_mesh["Ladders"][i]
+    for i=1, #current_mesh.ladders do
+        local ladder = current_mesh.ladders[i]
 
-        if (ladder["ID"] == ladder_id) then
+        if (ladder.id == ladder_id) then
             found_ladder = ladder
             break;
         end
@@ -145,8 +146,8 @@ local function find_z_at_location(point1, point2, location)
 end
 
 local function intersection_north(area, connection_area)
-    local north_y = connection_area["SouthEast"]["Y"]
-    local south_y = area["NorthWest"]["Y"]
+    local north_y = connection_area.south_east.y
+    local south_y = area.north_west.y
     local west_x = 0
     local east_x = 0
 
@@ -155,51 +156,51 @@ local function intersection_north(area, connection_area)
     local south_east_z = 0
     local south_west_z = 0
 
-    if (area["NorthWest"]["X"] >= connection_area["NorthWest"]["X"]) then
-        west_x = area["NorthWest"]["X"]
-        south_west_z = area["NorthWest"]["Z"]
+    if (area.north_west.x >= connection_area.north_west.x) then
+        west_x = area.north_west.x
+        south_west_z = area.north_west.z
 
         north_west_z = find_z_at_location(
-            Vector3(connection_area["NorthWest"]["X"], connection_area["SouthEast"]["Y"], connection_area["SouthWestZ"]),
-            Vector3(connection_area["SouthEast"]["X"], connection_area["SouthEast"]["Y"], connection_area["SouthEast"]["Z"]),
-            Vector3(area["NorthWest"]["X"], area["NorthWest"]["Y"], 0)
+            Vector3(connection_area.north_west.x, connection_area.south_east.y, connection_area.south_west_z),
+            Vector3(connection_area.south_east.x, connection_area.south_east.y, connection_area.south_east.z),
+            Vector3(area.north_west.x, area.north_west.y, 0)
         )
 
-        if (area["NorthWest"]["X"] == connection_area["NorthWest"]["X"]) then
-            north_west_z = connection_area["SouthWestZ"]
+        if (area.north_west.x == connection_area.north_west.x) then
+            north_west_z = connection_area.south_west_z
         end
     else
-        west_x = connection_area["NorthWest"]["X"]
-        north_west_z = connection_area["SouthWestZ"]
+        west_x = connection_area.north_west.x
+        north_west_z = connection_area.south_west_z
 
         south_west_z = find_z_at_location(
-            Vector3(area["NorthWest"]["X"], area["NorthWest"]["Y"], area["NorthWest"]["Z"]),
-            Vector3(area["SouthEast"]["X"], area["NorthWest"]["Y"], area["NorthEastZ"]),
-            Vector3(connection_area["NorthWest"]["X"], area["NorthWest"]["Y"], 0)
+            Vector3(area.north_west.x, area.north_west.y, area.north_west.z),
+            Vector3(area.south_east.x, area.north_west.y, area.north_east_z),
+            Vector3(connection_area.north_west.x, area.north_west.y, 0)
         )
     end
 
-    if (area["SouthEast"]["X"] <= connection_area["SouthEast"]["X"]) then
-        east_x = area["SouthEast"]["X"]
-        south_east_z = area["NorthEastZ"]
+    if (area.south_east.x <= connection_area.south_east.x) then
+        east_x = area.south_east.x
+        south_east_z = area.north_east_z
 
         north_east_z = find_z_at_location(
-            Vector3(connection_area["NorthWest"]["X"], connection_area["SouthEast"]["Y"], connection_area["SouthWestZ"]),
-            Vector3(connection_area["SouthEast"]["X"], connection_area["SouthEast"]["Y"], connection_area["SouthEast"]["Z"]),
-            Vector3(area["SouthEast"]["X"], area["NorthWest"]["Y"], 0)
+            Vector3(connection_area.north_west.x, connection_area.south_east.y, connection_area.south_west_z),
+            Vector3(connection_area.south_east.x, connection_area.south_east.y, connection_area.south_east.z),
+            Vector3(area.south_east.x, area.north_west.y, 0)
         )
 
-        if (area["SouthEast"]["X"] == connection_area["SouthEast"]["X"]) then
-            north_east_z = connection_area["SouthEast"]["Z"]
+        if (area.south_east.x == connection_area.south_east.x) then
+            north_east_z = connection_area.south_east.z
         end
     else
-        east_x = connection_area["SouthEast"]["X"]
-        north_east_z = connection_area["SouthEast"]["Z"]
+        east_x = connection_area.south_east.x
+        north_east_z = connection_area.south_east.z
 
         south_east_z = find_z_at_location(
-            Vector3(area["NorthWest"]["X"], area["NorthWest"]["Y"], area["NorthWest"]["Z"]),
-            Vector3(area["SouthEast"]["X"], area["NorthWest"]["Y"], area["NorthEastZ"]),
-            Vector3(connection_area["SouthEast"]["X"], area["NorthWest"]["Y"], 0)
+            Vector3(area.north_west.x, area.north_west.y, area.north_west.z),
+            Vector3(area.south_east.x, area.north_west.y, area.north_east_z),
+            Vector3(connection_area.south_east.x, area.north_west.y, 0)
         )
     end
 
@@ -209,59 +210,59 @@ end
 local function intersection_west(area, connection_area)
     local north_y = 0
     local south_y = 0
-    local west_x = connection_area["SouthEast"]["X"]
-    local east_x = area["NorthWest"]["X"]
+    local west_x = connection_area.south_east.x
+    local east_x = area.north_west.x
 
     local north_west_z = 0
     local north_east_z = 0
     local south_east_z = 0
     local south_west_z = 0
 
-    if (area["NorthWest"]["Y"] >= connection_area["NorthWest"]["Y"]) then
-        north_y = area["NorthWest"]["Y"]
-        north_east_z = area["NorthWest"]["Z"]
+    if (area.north_west.y >= connection_area.north_west.y) then
+        north_y = area.north_west.y
+        north_east_z = area.north_west.z
 
         north_west_z = find_z_at_location(
-            Vector3(connection_area["SouthEast"]["X"], connection_area["NorthWest"]["Y"], connection_area["NorthEastZ"]),
-            Vector3(connection_area["SouthEast"]["X"], connection_area["SouthEast"]["Y"], connection_area["SouthEast"]["Z"]),
-            Vector3(area["NorthWest"]["X"], area["NorthWest"]["Y"], 0)
+            Vector3(connection_area.south_east.x, connection_area.north_west.y, connection_area.north_east_z),
+            Vector3(connection_area.south_east.x, connection_area.south_east.y, connection_area.south_east.z),
+            Vector3(area.north_west.x, area.north_west.y, 0)
         )
 
-        if (area["NorthWest"]["Y"] == connection_area["NorthWest"]["Y"]) then
-            north_west_z = connection_area["NorthEastZ"]
+        if (area.north_west.y == connection_area.north_west.y) then
+            north_west_z = connection_area.north_east_z
         end
     else
-        north_y = connection_area["NorthWest"]["Y"]
-        north_west_z = connection_area["NorthEastZ"]
+        north_y = connection_area.north_west.y
+        north_west_z = connection_area.north_east_z
 
         north_east_z = find_z_at_location(
-            Vector3(area["NorthWest"]["X"], area["NorthWest"]["Y"], area["NorthWest"]["Z"]),
-            Vector3(area["NorthWest"]["X"], area["SouthEast"]["Y"], area["SouthWestZ"]),
-            Vector3(connection_area["SouthEast"]["X"], connection_area["NorthWest"]["Y"], 0)
+            Vector3(area.north_west.x, area.north_west.y, area.north_west.z),
+            Vector3(area.north_west.x, area.south_east.y, area.south_west_z),
+            Vector3(connection_area.south_east.x, connection_area.north_west.y, 0)
         )
     end
 
-    if (area["SouthEast"]["Y"] <= connection_area["SouthEast"]["Y"]) then
-        south_y = area["SouthEast"]["Y"]
-        south_east_z = area["SouthWestZ"]
+    if (area.south_east.y <= connection_area.south_east.y) then
+        south_y = area.south_east.y
+        south_east_z = area.south_west_z
 
         south_west_z = find_z_at_location(
-            Vector3(connection_area["SouthEast"]["X"], connection_area["NorthWest"]["Y"], connection_area["NorthEastZ"]),
-            Vector3(connection_area["SouthEast"]["X"], connection_area["SouthEast"]["Y"], connection_area["SouthEast"]["Z"]),
-            Vector3(area["NorthWest"]["X"], area["SouthEast"]["Y"], 0)
+            Vector3(connection_area.south_east.x, connection_area.north_west.y, connection_area.north_east_z),
+            Vector3(connection_area.south_east.x, connection_area.south_east.y, connection_area.south_east.z),
+            Vector3(area.north_west.x, area.south_east.y, 0)
         )
 
-        if (area["SouthEast"]["Y"] == connection_area["SouthEast"]["Y"]) then
-            south_west_z = connection_area["SouthEast"]["Z"]
+        if (area.south_east.y == connection_area.south_east.y) then
+            south_west_z = connection_area.south_east.z
         end
     else
-        south_y = connection_area["SouthEast"]["Y"]
-        south_west_z = connection_area["SouthEast"]["Z"]
+        south_y = connection_area.south_east.y
+        south_west_z = connection_area.south_east.z
 
         south_east_z = find_z_at_location(
-            Vector3(area["NorthWest"]["X"], area["NorthWest"]["Y"], area["NorthWest"]["Z"]),
-            Vector3(area["NorthWest"]["X"], area["SouthEast"]["Y"], area["SouthWestZ"]),
-            Vector3(connection_area["SouthEast"]["X"], connection_area["SouthEast"]["Y"], 0)
+            Vector3(area.north_west.x, area.north_west.y, area.north_west.z),
+            Vector3(area.north_west.x, area.south_east.y, area.south_west_z),
+            Vector3(connection_area.south_east.x, connection_area.south_east.y, 0)
         )
     end
 
@@ -277,18 +278,18 @@ local function intersection_east(area, connection_area)
 end
 
 local function find_connection_intersection(area, connection)
-    local direction = connection["Direction"]
-    local connection_area = connection["Area"]
+    local direction = connection.direction
+    local connection_area = connection.area
 
     local north_west, north_east, south_east, south_west = nil, nil, nil, nil
 
-    if (direction == 0) then
+    if (direction == 1) then
         north_west, north_east, south_east, south_west = intersection_north(area, connection_area)
-    elseif (direction == 1) then
-        north_west, north_east, south_east, south_west = intersection_east(area, connection_area)
     elseif (direction == 2) then
-        north_west, north_east, south_east, south_west = intersection_south(area, connection_area)
+        north_west, north_east, south_east, south_west = intersection_east(area, connection_area)
     elseif (direction == 3) then
+        north_west, north_east, south_east, south_west = intersection_south(area, connection_area)
+    elseif (direction == 4) then
         north_west, north_east, south_east, south_west = intersection_west(area, connection_area)
     end
 
@@ -300,22 +301,22 @@ local function center_between_vectors(v1, v2)
 end
 
 function walkbot_mesh_manager.connection_walking_point(connection)
-    local direction = connection["Direction"]
+    local direction = connection.direction
 
-    if (direction == 0) then
-        return center_between_vectors(connection["Intersection"][1], connection["Intersection"][2])
-    elseif (direction == 1) then
-        return center_between_vectors(connection["Intersection"][2], connection["Intersection"][3])
+    if (direction == 1) then
+        return center_between_vectors(connection.intersection[1], connection.intersection[2])
     elseif (direction == 2) then
-        return center_between_vectors(connection["Intersection"][3], connection["Intersection"][4])
+        return center_between_vectors(connection.intersection[2], connection.intersection[3])
     elseif (direction == 3) then
-        return center_between_vectors(connection["Intersection"][1], connection["Intersection"][4])
+        return center_between_vectors(connection.intersection[3], connection.intersection[4])
+    elseif (direction == 4) then
+        return center_between_vectors(connection.intersection[1], connection.intersection[4])
     end
 end
 
 function walkbot_mesh_manager.center_of_node(node)
-    local top_left = Vector3(node["NorthWest"]["X"], node["NorthWest"]["Y"], node["NorthWest"]["Z"])
-    local bottom_right = Vector3(node["SouthEast"]["X"], node["SouthEast"]["Y"], node["SouthEast"]["Z"])
+    local top_left = Vector3(node.north_west.x, node.north_west.y, node.north_west.z)
+    local bottom_right = Vector3(node.south_east.x, node.south_east.y, node.south_east.z)
     return (top_left + bottom_right) / 2
 end
 
@@ -329,50 +330,58 @@ function walkbot_mesh_manager.find_connections(area)
 
     local connections = {}
 
-    if (cached_connections[area["ID"]] ~= nil) then
-        return cached_connections[area["ID"]]
+    if (cached_connections[area.id] ~= nil) then
+        return cached_connections[area.id]
     end
 
-    for i=1, #area["Connections"] do
-        connections[i] = {}
-        connections[i]["Direction"] = area["Connections"][i]["Direction"]
-        connections[i]["Area"] = walkbot_mesh_manager.find_area_by_id(area["Connections"][i]["TargetAreaID"])
+    local connection_id = 1
 
-        local north_west, north_east, south_east, south_west = find_connection_intersection(area, connections[i])
-        connections[i]["Intersection"] = {north_west, north_east, south_east, south_west}
-    end
-
-    for i=1, #area["LadderConnections"] do
-        local ladder = area["LadderConnections"][i]
-        local connection_index = #connections + 1
-
-        connections[connection_index] = {}
-
-        local ladder_entity = walkbot_mesh_manager.find_ladder_by_id(ladder["TargetID"])
-
-        if (ladder["Direction"] == 0) then
-            connections[connection_index]["Area"] = walkbot_mesh_manager.find_area_by_id(ladder_entity["TopForwardAreaID"])
-            if (ladder_entity["Direction"] == 0) then
-                connections[connection_index]["Direction"] = 2
-            elseif (ladder_entity["Direction"] == 1) then
-                connections[connection_index]["Direction"] = 3
-            elseif (ladder_entity["Direction"] == 2) then
-                connections[connection_index]["Direction"] = 0
-            elseif (ladder_entity["Direction"] == 3) then
-                connections[connection_index]["Direction"] = 1
-            end
-        else
-            connections[connection_index]["Area"] = walkbot_mesh_manager.find_area_by_id(ladder_entity["BottomAreaID"])
-            connections[connection_index]["Direction"] = ladder_entity["Direction"]
+    for dir=1, 4 do
+        for i=1, #area.connections[dir].connections do
+            connections[connection_id] = {}
+            connections[connection_id].direction = dir
+            connections[connection_id].area = walkbot_mesh_manager.find_area_by_id(area.connections[dir].connections[i])
+    
+            local north_west, north_east, south_east, south_west = find_connection_intersection(area, connections[connection_id])
+            connections[connection_id].intersection = {north_west, north_east, south_east, south_west}
+            connection_id = connection_id + 1
         end
-
-        connections[connection_index]["LadderDirection"] = ladder["Direction"]
-
-        local north_west, north_east, south_east, south_west = find_connection_intersection(area, connections[connection_index])
-        connections[connection_index]["Intersection"] = {north_west, north_east, south_east, south_west}
     end
 
-    cached_connections[area["ID"]] = connections
+    for dir=1, 2 do
+        for i=1, #area.ladders[dir].connections do
+            local ladder = area.ladders[dir].connections[i]
+
+            connections[connection_id] = {}
+
+            local ladder_entity = walkbot_mesh_manager.find_ladder_by_id(ladder)
+
+            if (dir == 1) then
+                connections[connection_id].area = walkbot_mesh_manager.find_area_by_id(ladder_entity.top_forward_area_id)
+                if (ladder_entity.direction == 1) then
+                    connections[connection_id].direction = 3
+                elseif (ladder_entity.direction == 2) then
+                    connections[connection_id].direction = 4
+                elseif (ladder_entity.direction == 3) then
+                    connections[connection_id].direction = 1
+                elseif (ladder_entity.direction == 4) then
+                    connections[connection_id].direction = 2
+                end
+            else
+                connections[connection_id].area = walkbot_mesh_manager.find_area_by_id(ladder_entity.bottom_area_id)
+                connections[connection_id].direction = ladder_entity.direction
+            end
+
+            connections[connection_id].ladder_direction = dir
+
+            local north_west, north_east, south_east, south_west = find_connection_intersection(area, connections[connection_id])
+            connections[connection_id].intersection = {north_west, north_east, south_east, south_west}
+
+            connection_id = connection_id + 1
+        end
+    end
+
+    cached_connections[area.id] = connections
 
     return connections
 end
@@ -383,7 +392,7 @@ function walkbot_mesh_manager.find_connection_to_target_id(area, target_id)
 
     for i=1, #connections do
         local connection = connections[i]
-        if (connection["Area"]["ID"] == target_id) then
+        if (connection.area.id == target_id) then
             return connection
         end
     end
@@ -403,7 +412,7 @@ local function update_current_area_id()
 
     if (current_area == nil) then return end
 
-    walkbot.mesh_navigation.set_origin(current_area["ID"])
+    walkbot.mesh_navigation.set_origin(current_area.id)
 
     return
 end

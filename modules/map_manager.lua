@@ -3,6 +3,7 @@
 local walkbot_map_manager = {}
 local walkbot = nil
 local cached_map_data = {}
+local sourcenav = nil
 
 walkbot_map_manager.current_map = nil
 
@@ -44,7 +45,18 @@ local function load_map_data()
         return
     end
 
-    walkbot.mesh_manager.set_mesh(walkbot.json.decode(mesh_file:Read()))
+    local mesh_data = sourcenav.parse(mesh_file:Read())
+    if (mesh_data == nil) then
+        walkbot.gui.add_debug_variable(
+            "walkbot_map_manager_loading_status",
+            "Map loading status:",
+            "Could not parse data file, " .. mesh_file_path,
+            {255, 0, 0, 255}
+        )
+        return
+    end
+
+    walkbot.mesh_manager.set_mesh(mesh_data)
     mesh_file:Close()
     walkbot.gui.add_debug_variable(
         "walkbot_map_manager_loading_status",
@@ -65,6 +77,7 @@ local function on_draw()
 end
 
 local function initialize()
+    sourcenav = RunScript(walkbot.config.modules_directory .. "\\sourcenav.lua")
     callbacks.Register("Draw", "walkbot_map_manager_draw", on_draw)
 end
 

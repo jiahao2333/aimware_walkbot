@@ -4,10 +4,10 @@ local walkbot_debug = {}
 local walkbot = nil
 
 local function draw_area(area)
-    local nw_wtc_x, nw_wtc_y = client.WorldToScreen(Vector3(area["NorthWest"]["X"] + 1, area["NorthWest"]["Y"] + 1, area["NorthWest"]["Z"]))
-    local ne_wtc_x, ne_wtc_y = client.WorldToScreen(Vector3(area["SouthEast"]["X"] - 1, area["NorthWest"]["Y"] + 1, area["NorthEastZ"]))
-    local se_wtc_x, se_wtc_y = client.WorldToScreen(Vector3(area["SouthEast"]["X"] - 1, area["SouthEast"]["Y"] - 1, area["SouthEast"]["Z"]))
-    local sw_wtc_x, sw_wtc_y = client.WorldToScreen(Vector3(area["NorthWest"]["X"] + 1, area["SouthEast"]["Y"] - 1, area["SouthWestZ"]))
+    local nw_wtc_x, nw_wtc_y = client.WorldToScreen(Vector3(area.north_west.x + 1, area.north_west.y + 1, area.north_west.z))
+    local ne_wtc_x, ne_wtc_y = client.WorldToScreen(Vector3(area.south_east.x - 1, area.north_west.y + 1, area.north_east_z))
+    local se_wtc_x, se_wtc_y = client.WorldToScreen(Vector3(area.south_east.x - 1, area.south_east.y - 1, area.south_east.z))
+    local sw_wtc_x, sw_wtc_y = client.WorldToScreen(Vector3(area.north_west.x + 1, area.south_east.y - 1, area.south_west_z))
 
     if nw_wtc_x == nil or ne_wtc_x == nil or sw_wtc_x == nil or se_wtc_x == nil then return end
 
@@ -32,11 +32,11 @@ local function draw_areas()
 
         local r, g, b, a = 0, 0, 0, 100
 
-        if (walkbot.mesh_navigation.is_on_current_path(area["ID"])) then
+        if (walkbot.mesh_navigation.is_on_current_path(area.id)) then
             r, g, b, a = 255, 255, 255, 255
         end
 
-        if (walkbot.mesh_manager.is_current_area(area["ID"])) then
+        if (walkbot.mesh_manager.is_current_area(area.id)) then
             r, g, b, a = 2, 218, 237, 255
         end
 
@@ -57,11 +57,11 @@ local function draw_connections()
 
     for i=1, #connections do
         if (connections[i] ~= nil) then
-            local nw_wtc_x, nw_wtc_y = client.WorldToScreen(connections[i]["Intersection"][1])
-            local ne_wtc_x, ne_wtc_y = client.WorldToScreen(connections[i]["Intersection"][2])
-            local se_wtc_x, se_wtc_y = client.WorldToScreen(connections[i]["Intersection"][3])
-            local sw_wtc_x, sw_wtc_y = client.WorldToScreen(connections[i]["Intersection"][4])
-    
+            local nw_wtc_x, nw_wtc_y = client.WorldToScreen(connections[i].intersection[1])
+            local ne_wtc_x, ne_wtc_y = client.WorldToScreen(connections[i].intersection[2])
+            local se_wtc_x, se_wtc_y = client.WorldToScreen(connections[i].intersection[3])
+            local sw_wtc_x, sw_wtc_y = client.WorldToScreen(connections[i].intersection[4])
+
             if (nw_wtc_x ~= nil and ne_wtc_x ~= nil and se_wtc_x ~= nil and sw_wtc_x ~= nil) then
                 draw.Line(nw_wtc_x, nw_wtc_y, ne_wtc_x, ne_wtc_y)
                 draw.Line(nw_wtc_x, nw_wtc_y, sw_wtc_x, sw_wtc_y)
@@ -80,10 +80,10 @@ end
 local function area_to_text(area)
     if (area == nil) then return "" end
 
-    local area_string = area["ID"]
-    local place = walkbot.mesh_manager.find_place_by_id(area["PlaceID"])
+    local area_string = area.id
+    local place = walkbot.mesh_manager.find_place_by_id(area.place_id)
     if (place ~= nil) then
-        area_string = area_string .. " @ " .. place["Name"]
+        area_string = area_string .. " @ " .. place.name
     end
 
     return area_string

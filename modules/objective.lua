@@ -103,6 +103,7 @@ local function player_objectives()
     for i=1, #enemy_players do
         table.insert(currently_available_objectives, {
             ["title"] = "Enemy player " .. enemy_players[i]["entity"]:GetName(),
+            ["player"] = enemy_players[i]["entity"],
             ["type"] = 6,
             ["origin"] = enemy_players[i]["entity"]:GetAbsOrigin()
         })

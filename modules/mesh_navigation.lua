@@ -21,7 +21,7 @@ function walkbot_mesh_navigation.set_target(target_vector)
     local target_area = walkbot.mesh_manager.find_closest_area(target_vector)
     if (target_area == nil) then return end
 
-    current_target_id = target_area["ID"]
+    current_target_id = target_area.id
     current_target_location = target_vector
     walkbot_mesh_navigation.route_to_target()
 end
@@ -45,7 +45,7 @@ local function current_route_area_index(area_id)
     if current_route == nil then return nil end
 
     for i=1, #current_route do
-        if current_route[i]["ID"] == area_id then
+        if current_route[i].id == area_id then
             return i
         end
     end
@@ -61,7 +61,7 @@ local function distance_between(node_a, previous_intersection, neighbor_connecti
     local cost = 0
     local connection_walking_point = walkbot.mesh_manager.connection_walking_point(neighbor_connection)
     local previous_intersection_center = walkbot.mesh_manager.center_of_node(node_a)
-    local neighbor_center = walkbot.mesh_manager.center_of_node(neighbor_connection["Area"])
+    local neighbor_center = walkbot.mesh_manager.center_of_node(neighbor_connection.area)
 
     if (previous_intersection ~= nil) then
         previous_intersection_center = entities.GetLocalPlayer():GetAbsOrigin()
@@ -77,7 +77,7 @@ local function distance_between(node_a, previous_intersection, neighbor_connecti
 
     cost = distance
 
-    if (bit.band(node_a["Flags"], walkbot.mesh_manager.NAV_MESH_CROUCH) ~= 0 or bit.band(node_a["Flags"], walkbot.mesh_manager.NAV_MESH_STAIRS) ~= 0) then
+    if (bit.band(node_a.flags, walkbot.mesh_manager.NAV_MESH_CROUCH) ~= 0 or bit.band(node_a.flags, walkbot.mesh_manager.NAV_MESH_STAIRS) ~= 0) then
         cost = cost + (5 * distance)
     end
 
@@ -138,17 +138,17 @@ local function parsed_path(came_from)
 end
 
 local function a_star(start, goal)
-    local open_set = { start["ID"] }
+    local open_set = { start.id }
     local came_from = {}
     local previous_intersection = nil
 
     local g_score, f_score = {}, {}
-    g_score[start["ID"]] = 0
-    f_score[start["ID"]] = heuristic_cost_estimate(start, goal)
+    g_score[start.id] = 0
+    f_score[start.id] = heuristic_cost_estimate(start, goal)
 
     while #open_set > 0 do
         local current = lowest_f_score(open_set, f_score)
-        if current == goal["ID"] then
+        if current == goal.id then
             return parsed_path(reconstruct_path(came_from, current))
         end
 
@@ -161,13 +161,13 @@ local function a_star(start, goal)
         for _, neighbor_connection in ipairs(neighbor_connections) do
             local tentative_g_score = g_score[current] + distance_between(current_area, previous_intersection, neighbor_connection)
 
-            if g_score[neighbor_connection["Area"]["ID"]] == nil or tentative_g_score < g_score[neighbor_connection["Area"]["ID"]] then
-                came_from[neighbor_connection["Area"]["ID"]] = current
-                g_score[neighbor_connection["Area"]["ID"]] = tentative_g_score
-                f_score[neighbor_connection["Area"]["ID"]] = g_score[neighbor_connection["Area"]["ID"]] + heuristic_cost_estimate(neighbor_connection["Area"], goal)
-                if not_in(open_set, neighbor_connection["Area"]["ID"]) then
-                    previous_intersection = neighbor_connection["Intersection"]
-                    table.insert(open_set, neighbor_connection["Area"]["ID"])
+            if g_score[neighbor_connection.area.id] == nil or tentative_g_score < g_score[neighbor_connection.area.id] then
+                came_from[neighbor_connection.area.id] = current
+                g_score[neighbor_connection.area.id] = tentative_g_score
+                f_score[neighbor_connection.area.id] = g_score[neighbor_connection.area.id] + heuristic_cost_estimate(neighbor_connection.area, goal)
+                if not_in(open_set, neighbor_connection.area.id) then
+                    previous_intersection = neighbor_connection.intersection
+                    table.insert(open_set, neighbor_connection.area.id)
                 end
             end
         end
@@ -200,10 +200,10 @@ function walkbot_mesh_navigation.route_to_target()
     if (current_origin_id == nil) then
         local current_area = walkbot.mesh_manager.current_area()
         if (current_area == nil) then return current_route end
-        current_origin_id = current_area["ID"]
+        current_origin_id = current_area.id
     end
 
-    if (current_route ~= nil and current_route[#current_route] ~= nil and current_route[#current_route]["ID"] ~= current_target_id) then
+    if (current_route ~= nil and current_route[#current_route] ~= nil and current_route[#current_route].id ~= current_target_id) then
         current_route = {}
     end
 

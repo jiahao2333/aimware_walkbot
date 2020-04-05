@@ -8,6 +8,7 @@ walkbot_objective_use.IN_JUMP = bit.lshift(1, 1)
 walkbot_objective_use.IN_DUCK = bit.lshift(1, 2)
 walkbot_objective_use.IN_FORWARD = bit.lshift(1, 3)
 walkbot_objective_use.IN_USE = bit.lshift(1, 5)
+walkbot_objective_use.IN_RELOAD = bit.lshift(1, 13)
 
 local function plant_bomb(cmd)
     if (walkbot.enabled_checkbox:GetValue() == false) then return end
@@ -35,7 +36,7 @@ local function defuse(cmd)
 
     if ((local_player:GetAbsOrigin() - planted_bomb:GetAbsOrigin()):Length() < 50) then
         cmd.buttons = bit.bor(cmd.buttons, walkbot_objective_use.IN_USE)
-        cmd.viewangles = (local_player:GetBonePosition(8) - planted_bomb:GetAbsOrigin()):Angles() * -1
+        cmd.viewangles = ((local_player:GetAbsOrigin() + local_player:GetPropVector("localdata", "m_vecViewOffset[0]")) - planted_bomb:GetAbsOrigin()):Angles() * -1
         cmd.forwardmove = 0
         cmd.sidemove = 0
     end
@@ -60,9 +61,7 @@ local function grab_hostage(cmd)
 
     if (nearby_hostage ~= nil) then
         cmd.buttons = bit.bor(cmd.buttons, walkbot_objective_use.IN_USE)
-        cmd.viewangles = (nearby_hostage:GetBonePosition(8) - local_player:GetBonePosition(8)):Angles()
-        print("wut")
-
+        cmd.viewangles = (nearby_hostage:GetBonePosition(8) - (local_player:GetAbsOrigin() + local_player:GetPropVector("localdata", "m_vecViewOffset[0]"))):Angles()
     end
 end
 
